@@ -42,4 +42,23 @@ module.exports = [
       new ExtractTextPlugin('index.html'),
     ],
   },
+  {
+    name: 'style',
+    entry: path.join(__dirname, 'src', 'sass', 'style.sass'),
+    output: {
+      path: path.join(__dirname, 'build'),
+      filename: 'style.css',
+    },
+    module: {
+      loaders: [
+        {
+          test: /\.sass$/,
+          use: ExtractTextPlugin.extract(['css-loader', 'sass-loader']),
+        },
+      ],
+    },
+    plugins: [
+      new ExtractTextPlugin('style.css'),
+    ],
+  },
 ]
