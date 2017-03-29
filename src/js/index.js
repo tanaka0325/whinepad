@@ -1,9 +1,15 @@
 import React from 'react'
 import { render } from 'react-dom'
 
+import Logo from './components/Logo'
+
 const App = () => {
   return (
-    <h1>Hello world</h1>
+    <div>
+      <h1>
+        <Logo /> Whinepadにようこそ！
+      </h1>
+    </div>
   )
 }
 
