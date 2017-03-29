@@ -34,6 +34,7 @@ module.exports = [
       loaders: [
         {
           test: /\.html$/,
+          exclude: /node_modules/,
           use: ExtractTextPlugin.extract('raw-loader')
         },
       ],
@@ -53,7 +54,13 @@ module.exports = [
       loaders: [
         {
           test: /\.sass$/,
+          exclude: /node_modules/,
           use: ExtractTextPlugin.extract(['css-loader', 'sass-loader']),
+        },
+        {
+          test: /\.(jpg|png)$/,
+          exclude: /node_modules/,
+          loader: 'url-loader',
         },
       ],
     },

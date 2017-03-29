@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf build/* && touch build/.keep",
-    "build": "webpack -p",
+    "build": "webpack -p && cp -r src/images build/images",
     "start": "webpack-dev-server --content-base build/ --port 6789"
   },
   "dependencies": {
@@ -20,9 +20,11 @@
     "babel-preset-react": "^6.23.0",
     "css-loader": "^0.27.3",
     "extract-text-webpack-plugin": "^2.1.0",
+    "file-loader": "^0.10.1",
     "node-sass": "^4.5.2",
     "raw-loader": "^0.5.1",
     "sass-loader": "^6.0.3",
+    "url-loader": "^0.5.8",
     "webpack": "^2.3.2",
     "webpack-dev-server": "^2.4.2"
   }
