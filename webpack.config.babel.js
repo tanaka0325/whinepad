@@ -4,7 +4,7 @@ import ExtractTextPlugin from 'extract-text-webpack-plugin'
 module.exports = [
   {
     name: 'js',
-    entry: path.join(__dirname, 'src', 'index.js'),
+    entry: path.join(__dirname, 'src', 'js', 'index.js'),
     output: {
       path: path.join(__dirname, 'build'),
       filename: 'bundle.js',
