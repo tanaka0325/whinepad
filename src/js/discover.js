@@ -7,6 +7,7 @@ import Suggest from './components/Suggest'
 import Rating from './components/Rating'
 import FormInput from './components/FormInput'
 import Form from './components/Form'
+import Actions from './components/Actions'
 
 render(
   <div style={{ padding: '20px' }}>
@@ -88,6 +89,9 @@ render(
         initialData={{ rateme: 4, freetext: 'こんにちは' }}
       />
     </div>
+
+    <h2>操作</h2>
+    <div><Actions onAction={type => alert(type)} /></div>
 
   </div>
   ,
