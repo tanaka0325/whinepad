@@ -68,4 +68,45 @@ module.exports = [
       new ExtractTextPlugin('style.css'),
     ],
   },
+  {
+    name: 'discover js',
+    entry: path.join(__dirname, 'src', 'js', 'discover.js'),
+    output: {
+      path: path.join(__dirname, 'build'),
+      filename: 'discover-bundle.js',
+    },
+    target: 'web',
+    module: {
+      loaders: [
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          loader: 'babel-loader',
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.js', '.jsx'],
+    },
+  },
+  {
+    name: 'discover html',
+    entry: path.join(__dirname, 'src', 'discover.html'),
+    output: {
+      path: path.join(__dirname, 'build'),
+      filename: 'discover.html',
+    },
+    module: {
+      loaders: [
+        {
+          test: /\.html$/,
+          exclude: /node_modules/,
+          use: ExtractTextPlugin.extract('raw-loader')
+        },
+      ],
+    },
+    plugins: [
+      new ExtractTextPlugin('discover.html'),
+    ],
+  },
 ]
