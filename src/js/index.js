@@ -2,18 +2,24 @@ import React from 'react'
 import { render } from 'react-dom'
 
 import Logo from './components/Logo'
-import Excel from './components/Excel'
+import Whinepad from './components/Whinepad'
+import schema from './schema'
+
+let data = JSON.parse(localStorage.getItem('data'))
+
+if (!data) {
+  data = {}
+  schema.forEach(item => data[item.id] = item.sample)
+  data = [data]
+}
 
 const App = () => {
-  const headers = localStorage.getItem('headers') ? localStorage.getItem('headers') : ['タイトル', '年', '評価', 'コメント']
-  const data = localStorage.getItem('data') ? localStorage.getItem('data') : [['テスト', '2015', '3', 'あああ']]
-
   return (
     <div>
-      <h1>
+      <div className="app-header">
         <Logo /> Whinepadにようこそ！
-        <Excel headers={headers} initialData={data} />
-      </h1>
+      </div>
+      <Whinepad schema={schema} initialData={data} />
     </div>
   )
 }

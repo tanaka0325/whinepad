@@ -1,239 +1,258 @@
-import React, { Component } from 'react'
+import React, { Component, PropTypes } from 'react'
+import classNames from 'classnames'
+
+import Actions from './Actions'
+import Dialog from './Dialog'
+import Form from './Form'
+import FormInput from './FormInput'
+import Rating from './Rating'
 
 export default class Excel extends Component {
   constructor(props) {
     super(props)
+
+    console.log(this.props.initialData)
 
     this.state = {
       data: this.props.initialData,
       sortby: null,
       descending: false,
       edit: null,
-      search: false,
+      dialog: null,
     }
-
-    this._preSearchData = null
-    this._log = []
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      data: nextProps.initialData
+    })
+  }
 
-  _sort(e) {
-    const column = e.target.cellIndex
-    const descending = this.state.sortby === column && !this.state.descending
-    const data = Array.from(this.state.data)
+  _fireDataChange(data) {
+    this.props.onDataChange(data)
+  }
+
+  _sort(key) {
+    let data = Array.from(this.state.data)
+    // const column = e.target.cellIndex
+    const descending = this.state.sortby === key && !this.state.descending
     data.sort((a, b) => {
       return descending
-        ? (a[column] < b[column] ? 1 : -1)
-        : (a[column] > b[column] ? 1 : -1)
+        ? (a[key] < b[key] ? 1 : -1)
+        : (a[key] > b[key] ? 1 : -1)
     })
-    this._logSetState({
+    this.setState({
       data: data,
-      sortby: column,
+      sortby: key,
       descending: descending,
     })
+    this._fireDataChange(data)
   }
 
   _showEditor(e) {
-    this._logSetState({
+    this.setState({
       edit: {
         row: parseInt(e.target.dataset.row, 10),
-        cell: e.target.cellIndex,
+        cell: e.target.dataset.key,
       }
     })
   }
 
   _save(e) {
     e.preventDefault()
-    const input = e.target.firstChild
-    const data = this.state.data.slice()
-    data[this.state.edit.row][this.state.edit.cell] = input.value
+    const value = this.refs.input.getValue()
+    let data = Array.from(this.state.data)
+    data[this.state.edit.row][this.state.edit.key] = value
 
-    this._logSetState({
+    this.setState({
       edit: null,
       data: data,
     })
+    this._fireDataChange(data)
+  }
+
+  _actionClick(rowidx, action) {
+    this.setState({
+      dialog: {
+        type: action,
+        idx: rowidx,
+      }
+    })
+  }
+
+  _deleteConfirmationClick(action) {
+    if (action === 'dismiss') {
+      this._closeDialog()
+      return
+    }
+    let data = Array.from(this.state.data)
+    data.splice(this.state.dialog.idx, 1)
+    this.setState({
+      dialog: null,
+      data: data
+    })
+    this._fireDataChange(data)
+  }
+
+  _closeDialog() {
+    this.setState({
+      dialog: null
+    })
+  }
+
+  _saveDataDialog(action) {
+    if (action === 'dismiss') {
+      this._closeDialog()
+      return
+    }
+    let data = Array.from(this.state.data)
+    data[this.state.dialog.idx] = this.refs.form.getData()
+    this.setState({
+      dialog: null,
+      data: data
+    })
+    this._fireDataChange(data)
+  }
+
+  render() {
+    return (
+      <div className="Excel">
+        {this._renderTable()}
+        {this._renderDialog()}
+      </div>
+    )
+  }
+
+  _renderDialog() {
+    if (!this.state.dialog) {
+      return null
+    }
+    switch (this.state.dialog.type) {
+      case 'delete':
+        return this._renderDeleteDialog()
+      case 'info':
+        return this._renderFormDialog(true)
+      case 'edit':
+        return this._renderFormDialog()
+      default:
+        throw Error(`Unexpected dialog type ${this.state.dialog.type}`)
+    }
+  }
+
+  _renderDeleteDialog() {
+    const first = this.state.data[this.state.dialog.idx]
+    const nameguess = first[Object.keys(first)[0]]
+    return (
+      <Dialog
+        modal={true}
+        header="Confirm deletion"
+        confirmLabel="Delete"
+        onAction={this._deleteConfirmationClick.bind(this)}
+      >
+        {`Are you sure you want to delete "${nameguess}"?`}
+      </Dialog>
+    )
+  }
+
+  _renderFormDialog(readonly) {
+    return (
+      <Dialog
+        modal={true}
+        header={readonly ? '項目の情報' : '項目の編集'}
+        confirmLabel={readonly ? 'OK' : '保存'}
+        hasCancel={!readonly}
+        onAction={this._saveDataDialog.bind(this)}
+      >
+        <Form
+          ref="form"
+          fields={this.props.schema}
+          initialData={this.state.data[this.state.dialog.idx]}
+          readonly={readonly}
+        />
+      </Dialog>
+    )
   }
 
   _renderTable() {
     return (
       <table>
-        {/* <thead onClick={(e) => {this._sort(e)}}> */}
-        <thead onClick={this._sort.bind(this)}>
+        <thead>
           <tr>
-            {this.props.headers.map((title, idx) => {
-              if (this.state.sortby === idx) {
+            {this.props.schema.map((item) => {
+              if (!item.show) {
+                return null
+              }
+              let title = item.label
+              if (this.state.sortby === item.id) {
                 title += this.state.descending ? ' \u2191' : ' \u2193'
               }
-              return <th key={idx}>{title}</th>
-            })}
+              return (
+                <th
+                  className={`schema-${item.id}`}
+                  key={item.id}
+                  onClick={this._sort.bind(this, item.id)}
+                >
+                  {title}
+                </th>
+              )
+            }, this)}
+            <th className="ExcelNotSortable">操作</th>
           </tr>
         </thead>
         <tbody onDoubleClick={this._showEditor.bind(this)}>
-          {this._renderSearch.bind(this)()}
           {this.state.data.map((row, rowidx) => {
             return (
               <tr key={rowidx}>
-                {row.map((cell, idx) => {
-                  let content = cell
-                  const edit = this.state.edit
-                  if (edit && edit.row === rowidx && edit.cell === idx) {
-                    content = <form onSubmit={this._save.bind(this)}>
-                      <input type='text' defaultValue={content} />
-                    </form>
+                {Object.keys(row).map((cell, idx) => {
+                  const schema = this.props.schema[idx]
+                  if (!schema || !schema.show) {
+                    return null
                   }
-                  
-                  return <td key={idx} data-row={rowidx}>{content}</td>
-                })}
+                  const isRating = schema.type === 'rating'
+                  const edit = this.state.edit
+                  let content = row[cell]
+                  if (!isRating && edit && edit.row === rowidx && edit.key === schema.id) {
+                    content = <form onSubmit={this._save.bind(this)}>
+                      <FormInput ref="input" {...schema} defaultValue={content} />
+                    </form>
+                  } else if (isRating) {
+                    content = <Rating readonly={true} defaultValue={Number(content)} />
+                  }
+                  return (
+                    <td
+                      className={classNames({
+                        [`schema-${schema.id}`]: true,
+                        'ExcelEditable': !isRating,
+                        'ExcelDataLeft': schema.align === 'left',
+                        'ExcelDataRight': schema.align === 'right',
+                        'ExcelDataCenter': schema.align !== 'left' && schema.align !== 'right',
+                      })}
+                      key={idx}
+                      data-row={rowidx}
+                      data-key={schema.id}
+                    >
+                      {content}
+                    </td>
+                   )
+                }, this)}
+                <td className="ExcelDataCenter">
+                  <Actions onAction={this._actionClick.bind(this, rowidx)} />
+                </td>
               </tr>
             )
-          })}
+          }, this)}
         </tbody>
       </table>
-    )
-  }
-
-  _renderToolbar() {
-    return (
-      <div className="toolbar">
-        <button
-          onClick={this._toggleSearch.bind(this)}
-        >
-          検索
-        </button>
-        <button
-          // onClick={this._download.bind(this)('json')}
-          onClick={(e) => this._download('json', e)}
-          href="data.json"
-        >
-          JSONで保存
-        </button>
-        <button
-          // onClick={this._download.bind(this)('csv')}
-          onClick={(e) => this._download('csv', e)}
-          href="data.csv"
-        >
-          CSVで保存
-        </button>
-      </div>
-    )
-  }
-
-  _download(format, ev) {
-    const contents = format === 'json'
-      ? JSON.stringify(this.state.date)
-      : this.state.data.reduce((result, row) => {
-        return result
-          + row.reduce((rowresult, cell, idx) => {
-            return rowresult
-              + '"'
-              + cell.replace(/"/g, '""')
-              + '"'
-              + (idx < row.length - 1 ? ',' : '')
-          }, '')
-          + "\n"
-      }, '')
-    const URL = window.URL || window.webkitURL
-    const blob = new Blob([contents], {type: 'text/' + format})
-    console.log(blob)
-    ev.target.href = URL.createObjectURL(blob)
-    ev.target.download = 'data.' + format
-  }
-
-  _toggleSearch() {
-    if (this.state.search) {
-      this._logSetState({
-        data: this._preSearchData,
-        search: false,
-      })
-      this._preSearchData = null
-    } else {
-      this._preSearchData = this.state.data
-      this._logSetState({
-        search: true
-      })
-    }
-  }
-
-  _search(e) {
-    const needle = e.target.value.toLowerCase()
-    if (!needle) {
-      this._logSetState({data: this._preSearchData})
-      return
-    }
-    const idx = e.target.dataset.idx
-    const searchdata = this._preSearchData.filter((row) => {
-      return row[idx].toString().toLowerCase().indexOf(needle) > -1
-    })
-    this._logSetState({data: searchdata})
-  }
-
-  _renderSearch() {
-    if (!this.state.search) {
-      return null
-    }
-
-    return (
-      <tr onChange={this._search.bind(this)}>
-        {this.props.headers.map((_ignore, idx) => {
-          return (
-            <td key={idx}>
-              <input type='text' data-idx={idx} />
-            </td>
-          )
-        })}
-      </tr>
-    )
-  }
-
-  componentDidMount() {
-    document.onkeydown = (e) => {
-      if (e.altKey && e.shiftKey && e.keyCode === 82) {
-        this._replay()
-      }
-    }
-  }
-
-  _replay() {
-    if (this._log.length === 0) {
-      console.log('no state')
-      return
-    }
-    let idx = -1
-    const interval = setInterval(() => {
-      idx++
-      if (idx === this._log.length - 1) {
-        console.log('end replay!')
-        clearInterval(interval)
-      }
-      this.setState(this._log[idx])
-    }, 1000)
-  }
-
-  _logSetState(newState) {
-    this._log.push(JSON.parse(JSON.stringify(
-      this._log.length === 0 ? this.state : newState
-    )))
-    this.setState(newState)
-  }
-
-
-  render() {
-    return (
-      <div className="Excel">
-        {this._renderToolbar.bind(this)()}
-        {this._renderTable.bind(this)()}
-      </div>
     )
   }
 }
 
 Excel.propTypes = {
-  headers: React.PropTypes.arrayOf(
-    React.PropTypes.string
+  schema: PropTypes.arrayOf(
+    PropTypes.object
   ),
   initialData: React.PropTypes.arrayOf(
-    React.PropTypes.arrayOf(
-      React.PropTypes.string
-    )
-  )
+    PropTypes.object
+  ),
+  onDataChange: PropTypes.func,
 }
