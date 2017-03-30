@@ -6,6 +6,7 @@ export default[
         label : '名前',
         show : true, // Excelに表示するか否か sample: '2ドルのシャック',
         align : 'left', // Excelでの配置
+        sample: '2ドルのシャック'
     }, {
         id : 'year',
         label : '年',
