@@ -6,6 +6,7 @@ import Button from './components/Button'
 import Suggest from './components/Suggest'
 import Rating from './components/Rating'
 import FormInput from './components/FormInput'
+import Form from './components/Form'
 
 render(
   <div style={{ padding: '20px' }}>
@@ -76,6 +77,17 @@ render(
         </tr>
       </tbody>
     </table>
+
+    <h2>Form</h2>
+    <div>
+      <Form
+        fields={[
+          { label: '評価', type: 'rating', id: 'rateme' },
+          { label: 'あいさつ', id: 'freetext' },
+        ]}
+        initialData={{ rateme: 4, freetext: 'こんにちは' }}
+      />
+    </div>
 
   </div>
   ,
