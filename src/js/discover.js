@@ -4,6 +4,7 @@ import { render } from 'react-dom'
 import Logo from './components/Logo'
 import Button from './components/Button'
 import Suggest from './components/Suggest'
+import Rating from './components/Rating'
 
 render(
   <div style={{ padding: '20px' }}>
@@ -32,6 +33,12 @@ render(
     <div>
       <Suggest options={['eenie', 'meenie', 'miney', 'mo']} />
     </div>
+
+    <h2>Rating</h2>
+    <div>初期値なし: <Rating /></div>
+    <div>初期値4: <Rating defaultValue={4} /></div>
+    <div>最大値11: <Rating max={11} /></div>
+    <div>読み取り専用: <Rating readonly={true} defaultValue={3} /></div>
 
   </div>
   ,
